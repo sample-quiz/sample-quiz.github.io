@@ -1,9 +1,13 @@
 import { page, render } from './lib.js';
 import { editorPage } from './views/editor/editor.js'
+import {browsePage} from './views/browse.js'
 
 const main = document.querySelector('#content')
 
-page('/', decorateContext, editorPage);
+page('/browse', decorateContext, browsePage)
+page('/create', decorateContext, editorPage);
+page('/edit/:id', decorateContext, editorPage);
+
 
 page.start();
 
@@ -13,3 +17,8 @@ function decorateContext(ctx, next) {
     next();
 
 }
+
+
+import * as api  from './api/data.js';
+
+window.api = api;
