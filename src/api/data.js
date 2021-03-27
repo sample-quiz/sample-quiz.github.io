@@ -47,8 +47,12 @@ export async function deleteQuiz(id) {
 
 
 // question collection
-export async function getQuestionByQuizId(quizId) {
-    const query = JSON.stringify({quiz: createPointer('Quiz', quizId)});
+
+export async function getQuestionByQuizId(quizId, ownerId) {
+    const query = JSON.stringify({
+        quiz: createPointer('Quiz', quizId),
+        owner: createPointer('_User', ownerId)
+    });
     const response = await api.get(host + '/classes/Question?where=' + encodeURIComponent(query));
     return response.results;
 }
@@ -59,11 +63,31 @@ export async function createQuestion(quizId, question) {
     return await api.post(host + '/classes/Question', body)
 }
 
-export async function updateQuestion (id, question) {
+export async function updateQuestion(id, question) {
     return await api.put(host + '/classes/Question/' + id, question);
 }
 
-export async function deleteQuestion (id) {
+export async function deleteQuestion(id) {
     return await api.del(host + '/classes/Question/' + id);
+}
+
+// solution collection
+
+export async function getSolutionsByUserId(userId) {
+    const query = JSON.stringify({ owner: createPointer('_User', userId) })
+    const response = await api.get(host + '/classes/Solution?where=' + encodeURIComponent(query));
+    return response.results;
+}
+
+export async function getSolutionsByQuizId(quizId) {
+    const query = JSON.stringify({ quiz: createPointer('Quiz', quizId) })
+    const response = await api.get(host + '/classes/Solution?where=' + encodeURIComponent(query));
+    return response.results;
+}
+
+export async function submitSolution (quizId, solution) {
+    const body = addOwner(solution);
+    body.quiz = createPointer('Quiz', quizId);
+    return await api.post(host + host + '/classes/Solution', body)
 }
 

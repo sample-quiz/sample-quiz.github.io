@@ -3,16 +3,16 @@ import { getQuizes } from '../api/data.js'
 import {cubeLoader} from '../views/common/loader.js'
 
 
-const template = () => html`
+const template = (topics) => html`
 <section id="browse">
     <header class="pad-large">
         <form class="browse-filter">
             <input class="input" type="text" name="query">
             <select class="input" name="topic">
                 <option value="all">All Categories</option>
-                <option value="it">Languages</option>
-                <option value="hardware">Hardware</option>
-                <option value="software">Tools and Software</option>
+        
+                ${topics ? topics.map(topicTemplate) : ''}
+                
             </select>
             <input class="input submit action" type="submit" value="Filter Quizes">
         </form>
@@ -24,6 +24,8 @@ const template = () => html`
 
 
 </section>`
+
+const topicTemplate = (topic) => html`<option value=${topic}>${topic}</option>`
 
 
 async function loadQuizes() {
@@ -54,5 +56,9 @@ const quizTemplate = (quiz) => html`
 </article>`
 
 export async function browsePage(ctx) {
-    ctx.render(template())
+    const topics = Object.entries(await getQuizes()).map(q => {
+        return q[1].topic;
+    });
+
+    ctx.render(template(topics));
 }

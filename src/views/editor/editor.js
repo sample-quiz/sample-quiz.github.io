@@ -59,7 +59,7 @@ export async function editorPage(ctx) {
     if (quizId) {
         [quiz, questions] = await Promise.all([
             getQuizById(quizId),
-            getQuestionByQuizId(quizId)
+            getQuestionByQuizId(quizId, sessionStorage.getItem('userId'))
         ]);
         quiz.questions = questions;
     }
@@ -70,8 +70,8 @@ export async function editorPage(ctx) {
 
     async function updateCount(change = 0) {
         const count = questions.length + change;
-        await updateQuiz(quizId, {questionCount: count});
-    } 
+        await updateQuiz(quizId, {questionCount: count})
+    }
 
 
 
