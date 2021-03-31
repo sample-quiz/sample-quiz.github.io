@@ -1,15 +1,14 @@
-import { html, until } from '../../lib.js';
-import { getQuizById, getQuestionByQuizId } from '../../api/data.js';
+import { submitSolution } from '../../api/data.js';
+import { html, styleMap, classMap } from '../../lib.js';
 import { cubeLoader } from '../common/loader.js';
 
-const quizTemplate = (quiz, questions, currentIndex) => html`
+const quizTemplate = (quiz, questions, answers, currentIndex, onSelect, resetQuiz, onSubmit) => html`
 <section id="quiz">
     <header class="pad-large">
         <h1>${quiz.title}: Question ${currentIndex + 1} / ${questions.length}</h1>
         <nav class="layout q-control">
             <span class="block">Question index</span>
-            ${questions.map((q, i) => html`<a class="q-index q-current q-answered"
-                href="/quiz/${quiz.objectId}?question=${i + 1}"></a>`)}
+            ${questions.map((q,i) => indexTemplate(quiz.objectId, i, i == currentIndex, answers[i] != undefined))}
 
         </nav>
     </header>
@@ -20,17 +19,33 @@ const quizTemplate = (quiz, questions, currentIndex) => html`
                 ${questions[currentIndex].text}
             </p>
 
-            <form>
-            ${questions.map((q, i) => questionTemplate(q, i, i == currentIndex))}
-            </form> 
+            <form id="quiz-form" @change=${onSelect}>
+                ${questions.map((q, i) => questionTemplate(q, i, i == currentIndex))}
+            </form>
 
             <nav class="q-control">
-                <span class="block">12 questions remaining</span>
-                <a class="action" href=#><i class="fas fa-arrow-left"></i> Previous</a>
-                <a class="action" href=#><i class="fas fa-sync-alt"></i> Start over</a>
+                <span class="block">${answers.filter(a => a == undefined).length} questions remaining</span>
+                
+                ${ currentIndex > 0 ? html`
+                <a class="action" href="/quiz/${quiz.objectId}?question=${currentIndex}">
+                <i class="fas fa-arrow-left">
+                </i> Previous
+                </a>` : ''}
+                
+                <a @click=${resetQuiz} class="action" href="javascript:void(0)"><i class="fas fa-sync-alt"></i> Start over</a>
                 <div class="right-col">
-                    <a class="action" href=#>Next <i class="fas fa-arrow-right"></i></a>
-                    <a class="action" href=#>Submit answers</a>
+                   
+                   ${ currentIndex < questions.length-1 ? html`
+                   <a class="action" href="/quiz/${quiz.objectId}?question=${currentIndex + 2}">
+                    Next 
+                    <i class="fas fa-arrow-right">
+                    </i>
+                    </a>` : ''}
+                    ${
+                        answers.filter(a => a == undefined).length == 0 ?
+                        html`<a @click=${onSubmit} class="action" href=javascript:void(0)>Submit answers</a>`
+                        : ''
+                    }
                 </div>
             </nav>
         </article>
@@ -38,9 +53,19 @@ const quizTemplate = (quiz, questions, currentIndex) => html`
     </div>
 </section>`
 
+const indexTemplate = (quizId, i, isCurrent, isAnswered) => {
+   const className = {
+    'q-index' : true,
+    'q-current': isCurrent, 
+    'q-answered': isAnswered
+   };
+   return html`<a class=${classMap(className)} href="/quiz/${quizId}?question=${i + 1}"></a>`
+}
+
+
 
 const questionTemplate = (question, index, isCurrent) => html`
-<div data-index="question-${index}" style=${isCurrent ? '' : 'display:none'}>
+<div data-index="question-${index}" style=${styleMap({display: isCurrent ? '' : 'none'})}>
     ${question.answers.map((a, i) => answerTemplate(index, i, a))}
 </div>`
 
@@ -51,17 +76,55 @@ const answerTemplate = (questionIndex, index, text) => html`
     ${text}
 </label>`
 
-
 export async function quizPage(ctx) {
-    const quizId = ctx.params.id;
+    const index = Number(ctx.querystring.split('=')[1] || 1) - 1;
+    const questions = ctx.quiz.questions;
+    const answers = ctx.quiz.answers;
 
-    ctx.render(until(getQuiz(quizId), cubeLoader()));
+    update();
+
+    function onSelect (ev) {
+        const questionIndex = Number(ev.target.name.split('-')[1]);
+        if(Number.isNaN(questionIndex) != true) {
+            const answer = Number(ev.target.value);
+            answers[questionIndex] = answer;
+
+            update();
+        }
+    }
+
+    function resetQuiz () {
+        const confirmed = confirm('Are you sure you want to reset your answers?');
+        if(confirmed) {
+            ctx.clearCache(ctx.quiz.objectId);
+            ctx.page.redirect(`/quiz/${ctx.quiz.objectId}`);
+        }
+    }
+
+    async function onSubmit() {
+        const confirmed = confirm('Are you sure you want to finish the quiz?')
+        if(confirmed == false) {
+            return;
+        }
+        let correct = 0;
+        for (let i = 0; i < questions.length; i++) {
+           if(questions[i].correctIndex == answers[i]) {
+            correct++;
+           }
+        }
+
+        const solution = {
+            correct,
+            total: questions.length
+        };
+        ctx.render(cubeLoader());
+        await submitSolution(ctx.quiz.objectId, solution);
+        ctx.page.redirect('/result/' + ctx.quiz.objectId);
+        
+    }
+
+    function update() {
+        ctx.render(quizTemplate(ctx.quiz, questions, answers, index, onSelect, resetQuiz, onSubmit));
+    }
 }
 
-async function getQuiz(quizId) {
-    const quiz = await getQuizById(quizId);
-    const ownerId = quiz.owner.objectId;
-    const questions = await getQuestionByQuizId(quizId, ownerId);
-
-    return quizTemplate(quiz, questions, 0);
-}

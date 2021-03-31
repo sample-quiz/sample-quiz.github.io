@@ -29,12 +29,12 @@ const topicTemplate = (topic) => html`<option value=${topic}>${topic}</option>`
 
 
 async function loadQuizes() {
-    const quizes = await getQuizes();
+    const quizes = (await getQuizes()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     
     return html`
     <div class="pad-large alt-page">
     
-    ${quizes.map(quizTemplate)};
+    ${quizes.map(quizTemplate)}
     
     </div>`
 }
@@ -49,16 +49,17 @@ const quizTemplate = (quiz) => html`
         <span class="quiz-topic">Topic: ${quiz.topic}</span>
         <div class="quiz-meta">
             ${quiz.questionCount > 0 ? html`<span>${quiz.questionCount} question${quiz.questionCount == 1 ? '' : 's'}</span>` : ''}
-            <span>|</span>
-            <span>Taken ? times</span>
+            <!-- <span>|</span>
+            <span>Taken 54 times</span> -->
         </div>
     </div>
 </article>`
 
 export async function browsePage(ctx) {
-    const topics = Object.entries(await getQuizes()).map(q => {
-        return q[1].topic;
+    const topics = {};
+    Object.entries(await getQuizes()).forEach(q => {
+        let topic = q[1].topic
+        topics[topic] = topic
     });
-
-    ctx.render(template(topics));
+    ctx.render(template(Object.values(topics)));
 }

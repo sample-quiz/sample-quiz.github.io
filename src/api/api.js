@@ -66,6 +66,7 @@ export async function login (username, password) {
     const result = await post (settings.host + '/login', {username, password});
     
     sessionStorage.setItem('username', username);
+    sessionStorage.setItem('email', result.email);
     sessionStorage.setItem('authToken', result.sessionToken);
     sessionStorage.setItem('userId', result.objectId);
 
@@ -76,6 +77,7 @@ export async function register (email, username, password) {
     const result = await post (settings.host + '/users', {email, username, password});
     
     sessionStorage.setItem('username', username);
+    sessionStorage.setItem('email', result.email);
     sessionStorage.setItem('authToken', result.sessionToken);
     sessionStorage.setItem('userId', result.objectId);
 
