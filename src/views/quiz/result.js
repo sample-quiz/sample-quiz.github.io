@@ -15,12 +15,12 @@ const resultTemplate = (quiz, result) => html`
                 ${result.correct}/${result.total} correct answers
             </div>
 
-            <a class="action cta" href="#"><i class="fas fa-sync-alt"></i> Retake Quiz</a>
-            <a class="action cta" href="#"><i class="fas fa-clipboard-list"></i> See Details</a>
+            <a class="action cta" href="/quiz/${quiz.objectId}"><i class="fas fa-sync-alt"></i> Retake Quiz</a>
+          <!--  <a class="action cta" href="#"><i class="fas fa-clipboard-list"></i> See Details</a> -->
 
         </article>
     </div>
-
+   <!--
     <div class="pad-large alt-page">
         <article class="preview">
             <span class="s-correct">
@@ -86,7 +86,7 @@ const resultTemplate = (quiz, result) => html`
                     </span>
                 </div>
         </article>
-    </div>
+    </div> -->
 
 </section>`
 
