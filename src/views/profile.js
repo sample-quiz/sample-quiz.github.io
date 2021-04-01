@@ -93,7 +93,7 @@ async function loadResults(userId) {
         return quizResults.map((r, i) => {
             const quiz = quizes.find(q => q.objectId == r.quiz.objectId)
             const percent = (r.correct / r.total * 100).toFixed(0)
-
+            
 
             return resultTemplate(r, quiz, percent);
         })
