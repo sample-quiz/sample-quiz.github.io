@@ -102,3 +102,8 @@ export async function submitSolution (quizId, solution) {
     return await api.post(host + '/classes/Solution', body)
 }
 
+// get profile
+
+export async function getProfileById(id) {
+    return await api.get(host + `/users/${id}`);
+}

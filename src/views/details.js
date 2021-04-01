@@ -7,7 +7,7 @@ const template = (quiz) => html`
     <div class="pad-large alt-page">
         <article class="details">
             <h1>${quiz.title}</h1>
-            <span class="quiz-topic">A quiz by <a href="javascript:void(0)">${quiz.owner.username}</a> on the topic of
+            <span class="quiz-topic">A quiz by <a href="/profile/${quiz.owner.objectId}">${quiz.owner.username}</a> on the topic of
                 ${quiz.topic}</span>
             <div class="quiz-meta">
                 ${quiz.questionCount > 0 ? html`<span>${quiz.questionCount} question${quiz.questionCount == 1 ? '' :

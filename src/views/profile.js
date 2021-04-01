@@ -1,9 +1,9 @@
 import { get } from '../api/api.js';
-import { deleteQuestion, deleteQuiz, getQuestionByQuizId, getQuizById, getQuizByOwnerId, getQuizes, getSolutionsByUserId } from '../api/data.js';
+import { deleteQuestion, deleteQuiz, getProfileById, getQuestionByQuizId, getQuizById, getQuizByOwnerId, getQuizes, getSolutionsByUserId } from '../api/data.js';
 import { html, until } from '../lib.js';
 import { cubeLoader } from './common/loader.js';
 
-const template = (username, email) => html`
+const template = (username, email, userId) => html`
 <section id="profile">
     <header class="pad-large">
         <h1>Profile Page</h1>
@@ -16,34 +16,37 @@ const template = (username, email) => html`
                 <span class="profile-info">Username:</span>
                 ${username}
             </p>
-            <p>
+            ${email ? html`<p>
                 <span class="profile-info">Email:</span>
                 ${email}
-            </p>
-            <h2>Your Quiz Results</h2>
+            </p>` : ''}
+            <h2>${email ? html`Your` : ''} Quiz Results</h2>
             <table class="quiz-results">
                 <tbody>
-                    ${until(loadResults(), cubeLoader())}
+                    ${until(loadResults(userId), cubeLoader())}
                 </tbody>
             </table>
         </article>
     </div>
-
+    ${email ? html`
     <header class="pad-large">
         <h2>Quizes created by you</h2>
     </header>
 
     <div class="pad-large alt-page">
 
-        ${until(loadQuizes(), cubeLoader())}
+        ${until(loadQuizes(userId), cubeLoader())}
 
-    </div>
+    </div>` : ''}
+    
 
 </section>`;
 
-async function loadQuizes () {
-    const userId = sessionStorage.getItem('userId');
-    const quizes = await getQuizByOwnerId(userId)
+async function loadQuizes (userId) {
+    if(userId == undefined){
+        userId = sessionStorage.getItem('userId');
+    }
+    const quizes = await getQuizByOwnerId(userId);
    return quizes.map(quizTemplate); 
 }
 
@@ -78,8 +81,10 @@ async function onDelete(quizId, ownerId) {
     
 }
 
-async function loadResults() {
-    const userId = sessionStorage.getItem('userId');
+async function loadResults(userId) {
+    if(userId == undefined) {
+        userId = sessionStorage.getItem('userId');
+    }
     const quizResults = await getSolutionsByUserId(userId);
     const quizes = await getQuizes();
 
@@ -103,17 +108,27 @@ async function loadResults() {
 const resultTemplate = (result, quiz, percent) => html`
 <tr class="results-row">
     <td class="cell-1">${result.createdAt.split('T')[0].replaceAll('-', ' ')}</td>
-    <td class="cell-2"><a href="#">${quiz.title}</a></td>
+    <td class="cell-2"><a href="/quiz/${quiz.objectId}">${quiz.title}</a></td>
     <td class="cell-3 s-correct">${percent}%</td>
     <td class="cell-4 s-correct">${result.correct}/${result.total} correct answers</td>
 </tr>`
 
 export async function profile(ctx) {
-    const username = sessionStorage.getItem('username');
-    const email = sessionStorage.getItem('email');
+    const userId = sessionStorage.getItem('userId');
+    const profileId = ctx.params.userId;
     
-
-    ctx.render(template(username, email));
+    const isOwner = userId == profileId;
+    
+    if(isOwner) {
+        const email = sessionStorage.getItem('email');
+        const username = sessionStorage.getItem('username');
+        ctx.render(template(username, email));
+    } else {
+        const email = undefined
+        const profile = await getProfileById(profileId);
+        
+        ctx.render(template(profile.username, email, profile.objectId));
+    }
 
 }
 
