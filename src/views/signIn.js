@@ -1,7 +1,7 @@
 import { html } from '../lib.js'
 import { register, login } from '../api/data.js'
 
-const templateLogin = (onSubmit) => html`
+const templateLogin = (onSubmit, errorMsg) => html`
 <section id="login">
     <div class="pad-large">
         <div class="glass narrow">
@@ -10,9 +10,14 @@ const templateLogin = (onSubmit) => html`
                 <a class="tab-item" href="/signUp">Register</a>
             </header>
             <form @submit=${onSubmit} class="pad-med centered">
-                <label class="block centered">Username: <input class="auth-input input" type="text" name="username" /></label>
+                <label class="block centered">Username: <input class="auth-input input" type="text"
+                        name="username" /></label>
                 <label class="block centered">Password: <input class="auth-input input" type="password"
                         name="password" /></label>
+                ${errorMsg ? html`<div class="errorMsg">
+                    <p>${errorMsg}</p>
+                </div>` : ''}
+
                 <input class="block action cta" type="submit" value="Sign In" />
             </form>
             <footer class="tab-footer">
@@ -30,18 +35,28 @@ export async function signIn(ctx) {
         ev.preventDefault();
         
         const formData = new FormData(ev.target);
-        const username = formData.get('username');
-        const password = formData.get('password');
+        const username = formData.get('username').trim();
+        const password = formData.get('password').trim();
 
-        await login(username, password);
-
-        ctx.setUserNav();
-        ctx.page.redirect('/browse')
+        try {
+            if(username == '' || password == '' ) {
+                throw new Error('All fields are required!')
+            }
+            
+            await login(username, password);
+            ctx.setUserNav();
+            ctx.page.redirect('/browse')
+        } catch (err) {
+            if (err == 'Error') {
+                err = 'Passwords don\'t match!';
+            }
+            ctx.render(templateLogin(onSubmit, err))
+        }
     }
 }
 
 
-const templateRegister = (onSubmit) => html`
+const templateRegister = (onSubmit, errorMsg) => html`
 <section id="register">
     <div class="pad-large">
         <div class="glass narrow">
@@ -57,6 +72,9 @@ const templateRegister = (onSubmit) => html`
                         name="password" /></label>
                 <label class="block centered">Repeat: <input class="auth-input input" type="password"
                         name="repass" /></label>
+                ${errorMsg ? html`<div class="errorMsg">
+                    <p>${errorMsg}</p>
+                </div>` : ''}
                 <input class="block action cta" type="submit" value="Create Account" />
             </form>
             <footer class="tab-footer">
@@ -71,23 +89,29 @@ export async function signUp(ctx) {
 
     async function onSubmit(ev) {
         ev.preventDefault();
-        
+
         const formData = new FormData(ev.target);
-        const username = formData.get('username');
-        const email = formData.get('email');
-        const password = formData.get('password');
-        const repass = formData.get('repass');
+        const username = formData.get('username').trim();
+        const email = formData.get('email').trim();
+        const password = formData.get('password').trim();
+        const repass = formData.get('repass').trim();
 
-        if(username == '' || email == '' || password == '') {
-            return alert('All fields are required!');
+        try {
+
+            if (username == '' || email == '' || password == '') {
+                throw new Error('All fields are required!');
+            }
+            if (password != repass) {
+                throw new Error('Passwords don\' match!')
+            }
+
+            await register(email, username, password);
+            ctx.setUserNav();
+            ctx.page.redirect('/browse')
+        } catch (err) {
+            
+            ctx.render(templateRegister(onSubmit, err))
         }
-        if(password != repass) {
-            return alert('Passwords don\' match!')
-        }
 
-        await register(email, username, password);
-
-        ctx.setUserNav();
-        ctx.page.redirect('/browse')
     }
 }

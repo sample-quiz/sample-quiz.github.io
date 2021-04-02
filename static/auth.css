@@ -30,3 +30,11 @@ a.tab-item:hover {
     margin: auto;
     text-align: center;
 }
+
+.errorMsg {
+    color: red;
+}
+
+.errorMsg p {
+    -webkit-text-stroke-width: thin;
+}
