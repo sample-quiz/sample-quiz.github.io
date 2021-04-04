@@ -2,7 +2,7 @@ import { getQuizById } from '../api/data.js';
 import { html } from '../lib.js';
 
 
-const template = (quiz) => html`
+const template = (quiz, user) => html`
 <section id="details">
     <div class="pad-large alt-page">
         <article class="details">
@@ -17,9 +17,10 @@ const template = (quiz) => html`
             </div>
             <p class="quiz-desc">${quiz.description}</p>
 
+            ${user ? html`
             <div>
                 <a class="cta action" href="/quiz/${quiz.objectId}">Begin Quiz</a>
-            </div>
+            </div>` : ''}
 
         </article>
     </div>
@@ -27,7 +28,8 @@ const template = (quiz) => html`
 
 
 export async function details(ctx) {
+    const userId = sessionStorage.getItem('userId');
     const quizId = ctx.params.id;
     const quiz = await getQuizById(quizId)
-    ctx.render(template(quiz))
+    ctx.render(template(quiz, userId))
 }

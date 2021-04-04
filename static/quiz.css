@@ -153,3 +153,11 @@
 .s-answer span {
     padding: 4px 16px;
 }
+
+.question-details {
+    display: none;
+}
+
+.pad-large.alt-page.details {
+    display: none;
+}
